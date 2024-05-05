@@ -35,6 +35,12 @@ int main() {
         else if (strcmp(input,"process") == 0){
  	    process();
         }
+        else if (strcmp(input,"process_RR") == 0){
+ 	    process_RR();
+        }
+        else if (strcmp(input,"process_IRQ") == 0){
+ 	    process_IRQ();
+        }        
         else if (strcmp(input,"single pi") == 0){
  	    single();
  	}

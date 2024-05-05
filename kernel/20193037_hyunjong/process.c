@@ -24,6 +24,7 @@ task_struct process_table[MAX_PROCESSES];
 
 void initialize_process_table();
 int create_process(int memory_size);
+void schedule();
 void RR_process();
 void IRQ_process();
 void terminate_process(int pid);
@@ -44,10 +45,10 @@ int process() {
 
 int process_RR() {
     initialize_process_table();
-    create_process(1024);  // 프로세스 1 생성
-    create_process(2048);  // 프로세스 2 생성
-    create_process(512);   // 프로세스 3 생성
-    create_process(256);   // 프로세스 4 생성
+    int pid1 = create_process(1024);  // 프로세스 1 생성
+    int pid2 = create_process(2048);  // 프로세스 2 생성
+    int pid3 = create_process(512);   // 프로세스 3 생성
+    int pid4 = create_process(256);   // 프로세스 4 생성
     
     RR_process();
     terminate_process(pid1);
@@ -61,10 +62,10 @@ int process_RR() {
 
 int process_IRQ() {
     initialize_process_table();
-    create_process(1024);  // 프로세스 1 생성
-    create_process(2048);  // 프로세스 2 생성
-    create_process(512);   // 프로세스 3 생성
-    create_process(256);   // 프로세스 4 생성
+    int pid1 = create_process(1024);  // 프로세스 1 생성
+    int pid2 = create_process(2048);  // 프로세스 2 생성
+    int pid3 = create_process(512);   // 프로세스 3 생성
+    int pid4 = create_process(256);   // 프로세스 4 생성
     
     IRQ_process();
     terminate_process(pid1);
