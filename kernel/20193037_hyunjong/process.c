@@ -3,14 +3,15 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_PROCESSES 10
-#define TIME_SLICE 5  // 각 프로세스에 할당된 시간 (예: 5 타임 유닛)
+#define MAX_PROCESSES 15  // 프로세스 수를 15개로 증가
+#define TIME_SLICE 5      // 각 프로세스에 할당된 시간 (예: 5 타임 유닛)
+#define SLEEP_INTERVAL 1  // 스케줄링 간 딜레이 시간 (초)
 
 typedef enum process_state {
     RUNNING,
     WAITING,
     TERMINATED,
-    SUSPENDED
+    SUSPENDED  // 추가된 SUSPENDED 상태
 } process_state;
 
 typedef struct {
@@ -34,10 +35,14 @@ int process() {
     initialize_process_table();
     int pid1 = create_process(1024);  
     int pid2 = create_process(2048);
-    
+    int pid3 = create_process(512);   // 추가된 프로세스
+    int pid4 = create_process(256);   // 추가된 프로세스
+
     round_robin_schedule();
+    sleep(SLEEP_INTERVAL);            // 스케줄링 사이에 딜레이 추가
     terminate_process(pid1);
     round_robin_schedule();
+    sleep(SLEEP_INTERVAL);            // 스케줄링 사이에 딜레이 추가
     display_processes();
 
     return 0;
@@ -76,6 +81,7 @@ void round_robin_schedule() {
         if (current_process->pid != -1 && current_process->state != TERMINATED) {
             current_process->state = RUNNING;
             printf("Process %d is running.\n", current_index);
+            sleep(SLEEP_INTERVAL);  // 각 프로세스 실행 시 딜레이 추가
             // 간단한 시뮬레이션을 위해 실행 상태에서 바로 대기 상태로 전환
             current_process->state = WAITING;
         }
