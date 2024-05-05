@@ -4,13 +4,13 @@
 #include <unistd.h>
 
 #define MAX_PROCESSES 4
-#define SLEEP_INTERVAL 2 // 스케줄링 간 딜레이 시간 (초)
-#define RUN_TIME 30      // 총 실행 시간 (초)
+#define RUN_TIME 4      // 총 실행 시간 (초)
 
 typedef enum process_state {
     RUNNING,
     WAITING,
-    TERMINATED
+    TERMINATED,
+    INTERRUPTED   // 추가된 INTERRUPTED 상태
 } process_state;
 
 typedef struct {
@@ -24,8 +24,8 @@ task_struct process_table[MAX_PROCESSES];
 
 void initialize_process_table();
 int create_process(int memory_size);
-void round_robin_schedule();
-void terminate_process(int pid);
+void execute_processes();
+void terminate_all_processes();
 void display_processes();
 
 int main() {
@@ -33,21 +33,12 @@ int main() {
     create_process(1024);  // 프로세스 1 생성
     create_process(2048);  // 프로세스 2 생성
     create_process(512);   // 프로세스 3 생성
-    create_process(256);   // 프로세스 4 생성
+    create_process(256);   // 프로세스 4 생성, 인터럽트 관리자 역할
     
-    int elapsed_time = 0;
-    while (elapsed_time < RUN_TIME) {
-        round_robin_schedule();
-        sleep(SLEEP_INTERVAL);
-        elapsed_time += SLEEP_INTERVAL;
-    }
-
-    // 모든 프로세스 종료
-    for (int i = 0; i < MAX_PROCESSES; i++) {
-        terminate_process(i);
-    }
-
+    execute_processes();
+    terminate_all_processes();
     display_processes();
+
     return 0;
 }
 
@@ -74,25 +65,38 @@ int create_process(int memory_size) {
     return -1;
 }
 
-void round_robin_schedule() {
-    for (int i = 0; i < MAX_PROCESSES; i++) {
-        if (process_table[i].pid != -1 && process_table[i].state != TERMINATED) {
-            process_table[i].state = RUNNING;
-            printf("Process %d is running.\n", i);
-            sleep(SLEEP_INTERVAL);
-            process_table[i].state = WAITING;
-            printf("Process %d is now waiting.\n", i);
+void execute_processes() {
+    int elapsed_time = 0;
+    while (elapsed_time < RUN_TIME) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+            if (process_table[i].state != TERMINATED) {
+                process_table[i].state = RUNNING;
+                printf("Process %d is running.\n", i);
+                sleep(1);  // 각 프로세스 실행 시간
+                if (i == 1) {  // 프로세스 2 실행 중 인터럽트 발생
+                    printf("Interrupt by Process 4.\n");
+                    process_table[3].state = RUNNING;  // 프로세스 4 실행
+                    printf("Process 4 is running.\n");
+                    sleep(1);
+                    process_table[3].state = WAITING;
+                }
+                process_table[i].state = WAITING;
+                printf("Process %d is now waiting.\n", i);
+            }
         }
+        elapsed_time += 2;  // 각 프로세스 실행 + 인터럽트 처리 시간
     }
 }
 
-void terminate_process(int pid) {
-    if (pid >= 0 && pid < MAX_PROCESSES && process_table[pid].pid != -1) {
-        process_table[pid].state = TERMINATED;
-        free(process_table[pid].memory);
-        process_table[pid].memory = NULL;
-        process_table[pid].memory_size = 0;
-        printf("Terminated process %d.\n", pid);
+void terminate_all_processes() {
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+        if (process_table[i].pid != -1) {
+            process_table[i].state = TERMINATED;
+            free(process_table[i].memory);
+            process_table[i].memory = NULL;
+            process_table[i].memory_size = 0;
+            printf("Terminated process %d.\n", i);
+        }
     }
 }
 
