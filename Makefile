@@ -8,7 +8,7 @@ LDFLAGS=-lreadline -lpthread
 TARGET=minios
 
 # Source, Object files
-SRCS=kernel/kernel.c kernel/system.c kernel/20193037_hyunjong/fork.c kernel/20193037_hyunjong/ipc.c kernel/20193037_hyunjong/multi.c kernel/20193037_hyunjong/process.c
+SRCS=kernel/kernel.c kernel/system.c kernel/20193037_hyunjong/fork.c kernel/20193037_hyunjong/ipc.c kernel/20193037_hyunjong/multi.c kernel/20193037_hyunjong/process.c kernel/20193037_hyunjong/RoundRobin.c
 OBJS=$(SRCS:.c=.o) 
 
 # Include directory
