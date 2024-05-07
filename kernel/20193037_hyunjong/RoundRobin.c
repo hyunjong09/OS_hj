@@ -13,15 +13,15 @@ typedef struct {
 int RoundRobin() {
     int i, limit, total = 0, time_quantum;
     float average_wait_time = 0, average_turnaround_time = 0;
-    printf("Enter Total Number of Processes:\t");
+    printf("Enter Total Number of Processes: ");
     scanf("%d", &limit);
     Process processes[limit]; // 프로세스 배열 생성
 
     for(i = 0; i < limit; i++) {
         printf("\nEnter Details of Process[%d]\n", i + 1);
-        printf("Arrival Time:\t");
+        printf("Arrival Time: ");
         scanf("%d", &processes[i].arrivalTime);
-        printf("Burst Time:\t");
+        printf("Burst Time: ");
         scanf("%d", &processes[i].burstTime);
         processes[i].remainingTime = processes[i].burstTime; // 남은 실행 시간 초기화
         processes[i].processId = i + 1; // 프로세스 ID 설정
@@ -29,7 +29,7 @@ int RoundRobin() {
         processes[i].turnaroundTime = 0; // 초기 반환 시간
     }
 
-    printf("\nEnter Time Quantum:\t");
+    printf("\nEnter Time Quantum: ");
     scanf("%d", &time_quantum);
     printf("\n");
 
@@ -76,7 +76,7 @@ int RoundRobin() {
 
     average_wait_time /= limit;
     average_turnaround_time /= limit;
-    printf("\nAverage Waiting Time: %f\n", average_wait_time);
-    printf("Average Turnaround Time: %f\n", average_turnaround_time);
+    printf("\nAverage Waiting Time: %.3f\n", average_wait_time);
+    printf("Average Turnaround Time: %.3f\n", average_turnaround_time);
     return 0;
 }
