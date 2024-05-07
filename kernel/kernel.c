@@ -32,7 +32,7 @@ int main() {
         else if (strcmp(input,"multi pi") == 0){
  	    multi();
         }
-        else if (strcmp(input,"RounbRobin") == 0){
+        else if (strcmp(input,"RR") == 0){
  	    RoundRobin();
         }
         else if (strcmp(input,"process") == 0){
@@ -46,7 +46,7 @@ int main() {
         }        
         else if (strcmp(input,"single pi") == 0){
  	    single();
- 	}
+ 	    }
         else 
         {
         	printf("%s\n", input);

@@ -12,7 +12,7 @@ int RoundRobin() {
     int i, limit, total = 0, counter = 0, time_quantum;
     int wait_time = 0, turnaround_time = 0;
     float average_wait_time, average_turnaround_time;
-    printf("Enter Total Number of Processes:\t");
+    printf("Enter Total Number of Processes: ");
     scanf("%d", &limit);
     Process processes[limit]; // 프로세스 배열 생성
 
