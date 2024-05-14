@@ -8,10 +8,60 @@
 #define NUM_THREADS 4
 #define NUM_POINTS 100000000
 
+pthread_mutex_t mutex;
 sem_t sem;
-long long inside_circle = 0;//circle points global variable
-long long total_points =0;//total points global variable
+long long inside_circle = 0;
+long long total_points = 0;
  
+void* points_no_sync(void* arg)
+{
+    long long points_inside = 0;
+    double x, y;
+    unsigned int rand_state = rand();
+    
+    for(long long i = 0; i < NUM_POINTS / NUM_THREADS; i++)
+    {
+        x = (double)rand_r(&rand_state) / RAND_MAX * 2.0 - 1.0;
+        y = (double)rand_r(&rand_state) / RAND_MAX * 2.0 - 1.0;
+        if(x * x + y * y <= 1.0)
+        {
+            points_inside++;
+        }
+    }
+    
+    // Update global variable without synchronization
+    inside_circle += points_inside;
+    total_points += NUM_POINTS / NUM_THREADS;
+    
+    return NULL;
+}
+
+
+void* points_with_mutex(void* arg)
+{
+    long long points_inside = 0;
+    double x, y;
+    unsigned int rand_state = rand();
+    
+    for(long long i = 0; i < NUM_POINTS / NUM_THREADS; i++)
+    {
+        x = (double)rand_r(&rand_state) / RAND_MAX * 2.0 - 1.0;
+        y = (double)rand_r(&rand_state) / RAND_MAX * 2.0 - 1.0;
+        if(x * x + y * y <= 1.0)
+        {
+            points_inside++;
+        }
+    }
+    
+    // Synchronized update with mutex
+    pthread_mutex_lock(&mutex);
+    inside_circle += points_inside;
+    total_points += NUM_POINTS / NUM_THREADS;
+    pthread_mutex_unlock(&mutex);
+    
+    return NULL;
+}
+
 //create random points_thread function
 void* points(void* arg)
 {
@@ -39,44 +89,45 @@ void* points(void* arg)
 }
 	
 
+void run_simulation(void* (*simulation_func)(void*), const char* method_name)
+{
+    pthread_t threads[NUM_THREADS];
+    inside_circle = 0;
+    total_points = 0;
+
+    clock_t start = clock();
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_create(&threads[i], NULL, simulation_func, NULL);
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    clock_t end = clock();
+    
+    double pi_estimate = 4.0 * inside_circle / total_points;
+    printf("%s value of pi: %f\n", method_name, pi_estimate);
+    double time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("%s computation time: %f seconds\n", method_name, time_used);
+}
+
 void multi()
 {
-	int suc1, suc2;
-	clock_t start, end;
-	double time_used;
+    srand(time(NULL));
+    pthread_mutex_init(&mutex, NULL);
+    sem_init(&sem, 0, 1);
 	
-    pthread_t threads[NUM_THREADS];
-    	srand(time(NULL));
+    printf("Running simulation with no synchronization...\n");
+    run_simulation(points_no_sync, "No synchronization");
 
-    	
-    // Initialize the semaphore
-    if (sem_init(&sem, 0, 1) != 0) {
-        perror("sem_init: failed");
-        exit(EXIT_FAILURE);
-    }
-    
-    	start = clock();
-    for (int i = 0; i < NUM_THREADS; i++) {
-	suc1 = pthread_create(&threads[i], NULL, points, NULL);
-        if (suc1 != 0) {
-            perror("pthread_create: failed");
-            exit(EXIT_FAILURE);
-        }
-    }
-    for (int i = 0; i < NUM_THREADS; i++) {
-	suc2 = pthread_join(threads[i], NULL);
-        if(suc2 != 0) {
-            perror("pthread_join: failed");
-            exit(EXIT_FAILURE);
-        }
-    }
-        end = clock();
-	double pi_estimate = 4.0 * inside_circle / total_points;
-	printf("Multi-thread value of pi : %f\n", pi_estimate);
-    	time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    	printf("Multi-threading time: %f seconds\n", time_used);
-	sem_destroy(&sem);
+    printf("\nRunning simulation with mutex...\n");
+    run_simulation(points_with_mutex, "Mutex");
 
+    printf("\nRunning simulation with semaphore...\n");
+    run_simulation(points_with_semaphore, "Semaphore");
+
+    pthread_mutex_destroy(&mutex);
+    sem_destroy(&sem);
 }
 
 void single()
