@@ -63,7 +63,7 @@ void* points_with_mutex(void* arg)
 }
 
 //create random points_thread function
-void* points(void* arg)
+void* points_with_semaphore(void* arg)
 {
 	long long points_inside = 0;
 	double x,y;
