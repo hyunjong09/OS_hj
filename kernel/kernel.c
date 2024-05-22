@@ -33,7 +33,7 @@ int main() {
  	    multi();
         }
         else if (strcmp(input,"RR") == 0){
- 	    RoundRobin();
+ 	    RoundRobin_priority();
         }
         else if (strcmp(input,"process") == 0){
  	    process();

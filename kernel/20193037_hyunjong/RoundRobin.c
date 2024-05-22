@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <stdbool.h>
 
-// 프로세스 정보를 담는 구조체 정의
 typedef struct {
     int processId;
     int arrivalTime;
@@ -8,75 +8,102 @@ typedef struct {
     int remainingTime;
     int waitingTime;
     int turnaroundTime;
+    int priority;
 } Process;
 
-int RoundRobin() {
-    int i, limit, total = 0, time_quantum;
-    float average_wait_time = 0, average_turnaround_time = 0;
+typedef struct {
+    Process* queue;
+    int front;
+    int rear;
+    int count;
+    int capacity;
+    int timeQuantum;
+} Queue;
+
+void enqueue(Queue* q, Process p) {
+    if (q->count < q->capacity) {
+        q->rear = (q->rear + 1) % q->capacity;
+        q->queue[q->rear] = p;
+        q->count++;
+    }
+}
+
+Process dequeue(Queue* q) {
+    Process item = q->queue[q->front];
+    q->front = (q->front + 1) % q->capacity;
+    q->count--;
+    return item;
+}
+
+bool isEmpty(Queue* q) {
+    return q->count == 0;
+}
+
+int RoundRobin_priority() {
+    int limit, i, total_time = 0;
     printf("Enter Total Number of Processes: ");
     scanf("%d", &limit);
-    Process processes[limit]; // 프로세스 배열 생성
 
+    Process processes[limit];
     for(i = 0; i < limit; i++) {
         printf("\nEnter Details of Process[%d]\n", i + 1);
         printf("Arrival Time: ");
         scanf("%d", &processes[i].arrivalTime);
         printf("Burst Time: ");
         scanf("%d", &processes[i].burstTime);
-        processes[i].remainingTime = processes[i].burstTime; // 남은 실행 시간 초기화
-        processes[i].processId = i + 1; // 프로세스 ID 설정
-        processes[i].waitingTime = 0; // 초기 대기 시간
-        processes[i].turnaroundTime = 0; // 초기 반환 시간
+        printf("Priority: ");
+        scanf("%d", &processes[i].priority);
+        processes[i].remainingTime = processes[i].burstTime;
+        processes[i].processId = i + 1;
+        processes[i].waitingTime = 0;
+        processes[i].turnaroundTime = 0;
     }
 
-    printf("\nEnter Time Quantum: ");
-    scanf("%d", &time_quantum);
-    printf("\n");
+    Queue highPriorityQueue = {processes, 0, -1, 0, limit, 5};
+    Queue lowPriorityQueue = {processes, 0, -1, 0, limit, 10};
 
-    int remaining_processes = limit; // 완료되지 않은 프로세스 수
-    int start_time, end_time;
-
-    // 모든 프로세스가 완료될 때까지 반복
-    for(total = 0, i = 0; remaining_processes != 0;) {
-        if(processes[i].remainingTime > 0) {
-            start_time = total;
-            if(processes[i].remainingTime <= time_quantum) {
-                total += processes[i].remainingTime;
-                end_time = total;
-                processes[i].remainingTime = 0;
-            } else {
-                processes[i].remainingTime -= time_quantum;
-                total += time_quantum;
-                end_time = total;
-            }
-            printf("From %d to %d, Process[%d] was running.\n", start_time, end_time, processes[i].processId);
-            if(processes[i].remainingTime == 0) {
-                processes[i].turnaroundTime = total - processes[i].arrivalTime;
-                processes[i].waitingTime = processes[i].turnaroundTime - processes[i].burstTime;
-                average_wait_time += processes[i].waitingTime;
-                average_turnaround_time += processes[i].turnaroundTime;
-                remaining_processes--;
-            }
-        }
-        if(i == limit - 1) {
-            i = 0;
-        } else if((i + 1 < limit) && processes[i + 1].arrivalTime <= total) {
-            i++;
-        } else {
-            i = 0;
-        }
-    }
-
-    // 출력 부분
-    printf("\nDetailed Process Information:\n");
     for(i = 0; i < limit; i++) {
-        printf("Process[%d]: Burst Time: %d, Waiting Time: %d, Turnaround Time: %d\n",
-               processes[i].processId, processes[i].burstTime, processes[i].waitingTime, processes[i].turnaroundTime);
+        if (processes[i].priority < 3) {
+            enqueue(&highPriorityQueue, processes[i]);
+        } else {
+            enqueue(&lowPriorityQueue, processes[i]);
+        }
     }
 
-    average_wait_time /= limit;
-    average_turnaround_time /= limit;
-    printf("\nAverage Waiting Time: %.3f\n", average_wait_time);
-    printf("Average Turnaround Time: %.3f\n", average_turnaround_time);
+    printf("\nProcess Execution Details:\n");
+    while(!isEmpty(&highPriorityQueue) || !isEmpty(&lowPriorityQueue)) {
+        if (!isEmpty(&highPriorityQueue)) {
+            Process p = dequeue(&highPriorityQueue);
+            int time_run = (p.remainingTime > highPriorityQueue.timeQuantum) ? highPriorityQueue.timeQuantum : p.remainingTime;
+            p.remainingTime -= time_run;
+            total_time += time_run;
+
+            printf("Process[%d] (Priority: %d) runs from %d to %d in High Priority Queue\n", p.processId, p.priority, total_time - time_run, total_time);
+
+            if (p.remainingTime > 0) {
+                enqueue(&highPriorityQueue, p);
+            } else {
+                p.turnaroundTime = total_time - p.arrivalTime;
+                p.waitingTime = p.turnaroundTime - p.burstTime;
+                printf("Process[%d] Completion - Waiting Time: %d, Turnaround Time: %d\n", p.processId, p.waitingTime, p.turnaroundTime);
+            }
+        } else if (!isEmpty(&lowPriorityQueue)) {
+            Process p = dequeue(&lowPriorityQueue);
+            int time_run = (p.remainingTime > lowPriorityQueue.timeQuantum) ? lowPriorityQueue.timeQuantum : p.remainingTime;
+            p.remainingTime -= time_run;
+            total_time += time_run;
+
+            printf("Process[%d] (Priority: %d) runs from %d to %d in Low Priority Queue\n", p.processId, p.priority, total_time - time_run, total_time);
+
+            if (p.remainingTime > 0) {
+                enqueue(&lowPriorityQueue, p);
+            } else {
+                p.turnaroundTime = total_time - p.arrivalTime;
+                p.waitingTime = p.turnaroundTime - p.burstTime;
+                printf("Process[%d] Completion - Waiting Time: %d, Turnaround Time: %d\n", p.processId, p.waitingTime, p.turnaroundTime);
+            }
+        }
+    }
+
     return 0;
 }
