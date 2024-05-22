@@ -58,7 +58,7 @@ int RoundRobin_priority() {
         processes[i].processId = i + 1;
         processes[i].waitingTime = 0;
         processes[i].turnaroundTime = 0;
-        processes[i].firstStartTime = -1;
+        processes[i].lastStartTime = -1;
     }
 
     Queue highPriorityQueue = {processes, 0, -1, 0, limit, 5};
@@ -83,18 +83,20 @@ int RoundRobin_priority() {
 
         if (currentQueue != NULL) {
             Process p = dequeue(currentQueue);
-            if (p.firstStartTime == -1) {  // 처음 실행되는 경우
-                p.firstStartTime = total_time;  // 첫 실행 시간 기록
-            }
             int time_run = (p.remainingTime > currentQueue->timeQuantum) ? currentQueue->timeQuantum : p.remainingTime;
+            if (p.lastStartTime == 0) { // 프로세스가 처음 실행되는 경우
+                p.lastStartTime = total_time; // 실행 시작 시간 업데이트
+            }
             p.remainingTime -= time_run;
             total_time += time_run;
+
+            printf("Process[%d] (Priority: %d) runs from %d to %d\n", p.processId, p.priority, total_time - time_run, total_time);
 
             if (p.remainingTime > 0) {
                 enqueue(currentQueue, p);
             } else {
                 p.turnaroundTime = total_time - p.arrivalTime;
-                p.waitingTime = p.firstStartTime - p.arrivalTime;  // 대기 시간 계산 수정
+                p.waitingTime = total_time - p.burstTime - p.arrivalTime;
                 printf("Process[%d]: Completion - Waiting Time: %d, Turnaround Time: %d\n", p.processId, p.waitingTime, p.turnaroundTime);
             }
         }
