@@ -9,6 +9,7 @@ typedef struct {
     int waitingTime;
     int turnaroundTime;
     int priority;
+    int lastStartTime; 
 } Process;
 
 typedef struct {
@@ -39,7 +40,7 @@ bool isEmpty(Queue* q) {
     return q->count == 0;
 }
 
-int main() {
+int RoundRobin_priority() {
     int limit, i, total_time = 0;
     printf("Enter Total Number of Processes: ");
     scanf("%d", &limit);
@@ -57,6 +58,7 @@ int main() {
         processes[i].processId = i + 1;
         processes[i].waitingTime = 0;
         processes[i].turnaroundTime = 0;
+        processes[i].firstStartTime = -1;
     }
 
     Queue highPriorityQueue = {processes, 0, -1, 0, limit, 5};
@@ -81,17 +83,18 @@ int main() {
 
         if (currentQueue != NULL) {
             Process p = dequeue(currentQueue);
+            if (p.firstStartTime == -1) {  // 처음 실행되는 경우
+                p.firstStartTime = total_time;  // 첫 실행 시간 기록
+            }
             int time_run = (p.remainingTime > currentQueue->timeQuantum) ? currentQueue->timeQuantum : p.remainingTime;
             p.remainingTime -= time_run;
             total_time += time_run;
-
-            printf("Process[%d] (Priority: %d) runs from %d to %d\n", p.processId, p.priority, total_time - time_run, total_time);
 
             if (p.remainingTime > 0) {
                 enqueue(currentQueue, p);
             } else {
                 p.turnaroundTime = total_time - p.arrivalTime;
-                p.waitingTime = p.turnaroundTime - p.burstTime;
+                p.waitingTime = p.firstStartTime - p.arrivalTime;  // 대기 시간 계산 수정
                 printf("Process[%d]: Completion - Waiting Time: %d, Turnaround Time: %d\n", p.processId, p.waitingTime, p.turnaroundTime);
             }
         }
