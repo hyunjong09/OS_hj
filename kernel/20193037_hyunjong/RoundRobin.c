@@ -9,7 +9,7 @@ typedef struct {
     int waitingTime;
     int turnaroundTime;
     int priority;
-    int lastStartTime; 
+    int lastStartTime; // 마지막으로 실행을 시작한 시간
 } Process;
 
 typedef struct {
@@ -58,7 +58,7 @@ int RoundRobin_priority() {
         processes[i].processId = i + 1;
         processes[i].waitingTime = 0;
         processes[i].turnaroundTime = 0;
-        processes[i].lastStartTime = -1;
+        processes[i].lastStartTime = -1
     }
 
     Queue highPriorityQueue = {processes, 0, -1, 0, limit, 5};
@@ -83,10 +83,10 @@ int RoundRobin_priority() {
 
         if (currentQueue != NULL) {
             Process p = dequeue(currentQueue);
-            int time_run = (p.remainingTime > currentQueue->timeQuantum) ? currentQueue->timeQuantum : p.remainingTime;
-            if (p.lastStartTime == 0) { // 프로세스가 처음 실행되는 경우
-                p.lastStartTime = total_time; // 실행 시작 시간 업데이트
+            if (p.lastStartTime == -1) { 
+                p.lastStartTime = total_time; 
             }
+            int time_run = (p.remainingTime > currentQueue->timeQuantum) ? currentQueue->timeQuantum : p.remainingTime;
             p.remainingTime -= time_run;
             total_time += time_run;
 
@@ -96,7 +96,7 @@ int RoundRobin_priority() {
                 enqueue(currentQueue, p);
             } else {
                 p.turnaroundTime = total_time - p.arrivalTime;
-                p.waitingTime = total_time - p.burstTime - p.arrivalTime;
+                p.waitingTime = p.lastStartTime - p.arrivalTime; 
                 printf("Process[%d]: Completion - Waiting Time: %d, Turnaround Time: %d\n", p.processId, p.waitingTime, p.turnaroundTime);
             }
         }
