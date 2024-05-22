@@ -39,7 +39,7 @@ bool isEmpty(Queue* q) {
     return q->count == 0;
 }
 
-int RoundRobin_priority() {
+int main() {
     int limit, i, total_time = 0;
     printf("Enter Total Number of Processes: ");
     scanf("%d", &limit);
@@ -72,35 +72,27 @@ int RoundRobin_priority() {
 
     printf("\nProcess Execution Details:\n");
     while(!isEmpty(&highPriorityQueue) || !isEmpty(&lowPriorityQueue)) {
+        Queue *currentQueue = NULL;
         if (!isEmpty(&highPriorityQueue)) {
-            Process p = dequeue(&highPriorityQueue);
-            int time_run = (p.remainingTime > highPriorityQueue.timeQuantum) ? highPriorityQueue.timeQuantum : p.remainingTime;
-            p.remainingTime -= time_run;
-            total_time += time_run;
-
-            printf("Process[%d] (Priority: %d) runs from %d to %d in High Priority Queue\n", p.processId, p.priority, total_time - time_run, total_time);
-
-            if (p.remainingTime > 0) {
-                enqueue(&highPriorityQueue, p);
-            } else {
-                p.turnaroundTime = total_time - p.arrivalTime;
-                p.waitingTime = p.turnaroundTime - p.burstTime;
-                printf("Process[%d] Completion - Waiting Time: %d, Turnaround Time: %d\n", p.processId, p.waitingTime, p.turnaroundTime);
-            }
+            currentQueue = &highPriorityQueue;
         } else if (!isEmpty(&lowPriorityQueue)) {
-            Process p = dequeue(&lowPriorityQueue);
-            int time_run = (p.remainingTime > lowPriorityQueue.timeQuantum) ? lowPriorityQueue.timeQuantum : p.remainingTime;
+            currentQueue = &lowPriorityQueue;
+        }
+
+        if (currentQueue != NULL) {
+            Process p = dequeue(currentQueue);
+            int time_run = (p.remainingTime > currentQueue->timeQuantum) ? currentQueue->timeQuantum : p.remainingTime;
             p.remainingTime -= time_run;
             total_time += time_run;
 
-            printf("Process[%d] (Priority: %d) runs from %d to %d in Low Priority Queue\n", p.processId, p.priority, total_time - time_run, total_time);
+            printf("Process[%d] (Priority: %d) runs from %d to %d\n", p.processId, p.priority, total_time - time_run, total_time);
 
             if (p.remainingTime > 0) {
-                enqueue(&lowPriorityQueue, p);
+                enqueue(currentQueue, p);
             } else {
                 p.turnaroundTime = total_time - p.arrivalTime;
                 p.waitingTime = p.turnaroundTime - p.burstTime;
-                printf("Process[%d] Completion - Waiting Time: %d, Turnaround Time: %d\n", p.processId, p.waitingTime, p.turnaroundTime);
+                printf("Process[%d]: Completion - Waiting Time: %d, Turnaround Time: %d\n", p.processId, p.waitingTime, p.turnaroundTime);
             }
         }
     }
